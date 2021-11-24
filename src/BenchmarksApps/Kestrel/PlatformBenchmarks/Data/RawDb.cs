@@ -168,8 +168,13 @@ namespace PlatformBenchmarks
                     {
                         var randomNumber = _random.Next(1, 10001);
 
+#if NET6_0_OR_GREATER
+                        updateCmd.Parameters.Add(new NpgsqlParameter<int> { TypedValue = results[i].Id });
+                        updateCmd.Parameters.Add(new NpgsqlParameter<int> { TypedValue = randomNumber });
+#else
                         updateCmd.Parameters.Add(new NpgsqlParameter<int>(parameterName: ids[i], value: results[i].Id));
                         updateCmd.Parameters.Add(new NpgsqlParameter<int>(parameterName: randoms[i], value: randomNumber));
+#endif
 
                         results[i].RandomNumber = randomNumber;
                     }

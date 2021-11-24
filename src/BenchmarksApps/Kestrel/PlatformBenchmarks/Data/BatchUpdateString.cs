@@ -32,12 +32,18 @@ namespace PlatformBenchmarks
 
             var sb = StringBuilderCache.Acquire();
 
-            sb.AppendLine("UPDATE world SET randomNumber = CASE id");
-            Enumerable.Range(0, batchSize).ToList().ForEach(i => sb.AppendLine($"when @I{i} then @R{i}"));
-            sb.AppendLine("else randomnumber");
-            sb.AppendLine("end");
-            sb.Append("where id in (");
-            Enumerable.Range(0, batchSize).ToList().ForEach(i => sb.AppendLine($"@I{i}{(lastIndex == i ? "" : ",")} "));
+            sb.Append("UPDATE world SET randomnumber = CASE id");
+#if NET6_0_OR_GREATER
+            Enumerable.Range(0, batchSize).Select(i => i * 2 + 1).ToList().ForEach(i => sb.Append($" WHEN ${i} THEN ${i + 1}"));
+#else
+            Enumerable.Range(0, batchSize).ToList().ForEach(i => sb.Append($" WHEN @I{i} THEN @R{i}"));
+#endif
+            sb.Append(" ELSE randomnumber END WHERE id IN (");
+#if NET6_0_OR_GREATER
+            Enumerable.Range(0, batchSize).Select(i => i * 2 + 1).ToList().ForEach(i => sb.Append($"${i}{(lastIndex * 2 + 1 == i ? "" : ",")}"));
+#else
+            Enumerable.Range(0, batchSize).ToList().ForEach(i => sb.Append($"@I{i}{(lastIndex == i ? "" : ",")}"));
+#endif
             sb.Append(")");
 
             return _queries[batchSize] = StringBuilderCache.GetStringAndRelease(sb);
